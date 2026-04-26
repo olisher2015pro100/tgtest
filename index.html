@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>mngnv_que</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="style.css" />
+    
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- Dadata Suggestions -->
+    <link href="https://cdn.jsdelivr.net/npm/suggestions-jquery@21.12.0/dist/css/suggestions.min.css" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@21.12.0/dist/js/jquery.suggestions.min.js"></script>
+    
+    
+    <style>
+        :root { 
+            --bg: #000; 
+            --text: #fff; 
+            --card: #0d0d0d; 
+            --border: #1a1a1a; 
+            --accent: #ffffff;
+            --input-bg: #111111;
+            --secondary-text: #666;
+        }
+        
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0; min-height: 100vh;
+            background: var(--bg); color: var(--text);
+            font-family: "Times New Roman", Times, Georgia, serif;
+            text-transform: lowercase;
+        }
+
+        .app { width: 100%; max-width: 500px; margin: 0 auto; }
+
+        header { 
+            padding: 25px 20px; text-align: center; font-weight: 900; letter-spacing: 6px; 
+            text-transform: uppercase; border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); z-index: 100;
+        }
+
+        /* КАТАЛОГ */
+        .catalog { padding: 15px; display: grid; gap: 20px; }
+        .product-card { 
+            background: var(--card); border-radius: 28px; 
+            overflow: hidden; border: 1px solid var(--border); transition: transform 0.2s;
+        }
+        .product-card:active { transform: scale(0.98); }
+        .product-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
+        .card-info { padding: 20px; }
+        .card-title { font-weight: 800; font-size: 18px; margin-bottom: 4px; }
+        .card-price { color: var(--secondary-text); font-size: 16px; font-weight: 600; }
+
+        .coming-soon-card {
+            height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #050505; border: 1px dashed #222; border-radius: 28px; color: #333;
+        }
+
+        /* СТРАНИЦЫ */
+        .page { display: none; animation: slideUp 0.3s ease-out; }
+        .page.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .back-nav { padding: 15px 20px; color: var(--secondary-text); cursor: pointer; font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        
+        /* КАРТОЧКА ТОВАРА */
+        .swiper { width: 100%; height: 500px; background: #000; }
+        .swiper-slide img { width: 100%; height: 100%; object-fit: contain; }
+
+        .details { padding: 25px; }
+        .main-title { font-size: 32px; font-weight: 900; margin-bottom: 8px; letter-spacing: -1px; }
+        .main-price { font-size: 22px; color: var(--secondary-text); margin-bottom: 25px; font-weight: 600; }
+        
+        .description { 
+            font-size: 15px; color: #999; line-height: 1.6; 
+            background: #080808; padding: 20px; border-radius: 24px; margin-bottom: 30px;
+            white-space: pre-line; border: 1px solid #111; text-transform: none;
+        }
+
+        .sizes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 35px; }
+        .size-btn { 
+            padding: 20px; border: 1px solid #222; border-radius: 20px; 
+            text-align: center; cursor: pointer; transition: 0.2s; font-weight: 800; font-size: 14px;
+        }
+        .size-btn.full { grid-column: 1 / -1; }
+        .size-btn.selected { background: var(--accent); color: #000; border-color: var(--accent); }
+
+        /* ФОРМА */
+        .form-group { margin-bottom: 12px; position: relative; }
+        input, select { 
+            width: 100%; padding: 20px; border-radius: 20px; 
+            background: var(--input-bg); border: 1px solid #1a1a1a; color: #fff; 
+            box-sizing: border-box; outline: none; font-family: inherit; font-size: 16px;
+            transition: 0.2s;
+        }
+        input:focus, select:focus { border-color: #444; background: #151515; }
+        input::placeholder { color: #444; }
+
+        .btn-main { 
+            width: 100%; padding: 22px; background: var(--accent); color: #000; 
+            border: none; border-radius: 22px; font-weight: 900; font-size: 17px; 
+            text-transform: uppercase; cursor: pointer; margin-top: 10px;
+            letter-spacing: 1px; transition: 0.2s;
+        }
+        .btn-main:active { transform: scale(0.98); }
+
+        /* ДОСТАВКА ИНФО */
+        .shipping-info {
+            background: #080808; border: 1px solid #1a1a1a; border-radius: 20px;
+            padding: 20px; margin-bottom: 20px; font-size: 14px;
+        }
+        .shipping-cost { font-size: 20px; font-weight: 900; margin-top: 10px; }
+        .shipping-status { 
+            display: inline-block; padding: 8px 12px; border-radius: 10px; 
+            font-size: 12px; font-weight: 800; margin-top: 8px;
+        }
+        .shipping-status.loading { background: #222; color: #888; }
+        .shipping-status.success { background: #1a3a1a; color: #4f4; }
+        .shipping-status.error { background: #3a1a1a; color: #f44; }
+
+        /* ГОРОД ПОДСКАЗКИ */
+        .city-suggestions {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: #1a1a1a; border: 1px solid #333; border-radius: 15px;
+            max-height: 200px; overflow-y: auto; z-index: 200; margin-top: 5px;
+            display: none;
+        }
+        .city-suggestions.show { display: block; }
+        .suggestion-item {
+            padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #222;
+            transition: 0.1s;
+        }
+        .suggestion-item:hover { background: #222; }
+        .suggestion-item:last-child { border-bottom: none; }
+
+        /* LOADING SPINNER */
+        .spinner {
+            display: inline-block; width: 12px; height: 12px;
+            border: 2px solid #444; border-top: 2px solid #fff; border-radius: 50%;
+            animation: spin 0.6s linear infinite; margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* DADATA SUGGESTIONS STYLING */
+        .suggestions-suggestions {
+            background: var(--input-bg) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 15px !important;
+            color: var(--text) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+            z-index: 1000 !important;
+            font-family: "Times New Roman", Times, Georgia, serif !important;
+        }
+
+        .suggestions-suggestions .suggestions-suggestion {
+            padding: 12px 15px !important;
+            color: var(--text) !important;
+            border-bottom: 1px solid var(--border) !important;
+            cursor: pointer;
+            transition: background-color 0.15s ease !important;
+        }
+
+        .suggestions-suggestions .suggestions-suggestion:hover,
+        .suggestions-suggestions .suggestions-suggestion.selected {
+            background: #222 !important;
+            color: var(--accent) !important;
+        }
+
+        .suggestions-suggestions .suggestions-suggestion:last-child {
+            border-bottom: none !important;
+        }
+
+        .suggestions-suggestions .suggestions-suggestion strong {
+            color: var(--accent) !important;
+            font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <header>mngnv</header>
+
+    <!-- КАТАЛОГ -->
+    <div id="catalog-page" class="page active">
+        <div class="catalog">
+            <div class="product-card" onclick="openProduct()">
+                <img src="https://raw.githubusercontent.com/olisher2015pro100/mngnv-que/main/zip-hoode.jpg" alt="product">
+                <div class="card-info">
+                    <div class="card-title">zip-hoodie "snich"</div>
+                    <div class="card-price">8000₽</div>
+                </div>
+            </div>
+            <div class="product-card" onclick="openProduct('tshirt')">
+                <img src="tshirt1.jpg" alt="tshirt">
+                <div class="card-info">
+                    <div class="card-title">t-shirt "snich"</div>
+                    <div class="card-price">2900₽</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- КАРТОЧКА ТОВАРА -->
+    <div id="product-page" class="page">
+        <div class="back-nav" onclick="showPage('catalog-page')">← КАТАЛОГ</div>
+        <div class="swiper mySwiper">
+            <div class="swiper-wrapper" id="gallery"></div>
+            <div class="swiper-pagination"></div>
+        </div>
+        <div class="details">
+            <div class="main-title">zip-hoodie "snich"</div>
+            <div class="main-price">8000₽</div>
+            <div class="description">new drop
+оверсайз крой
+ткань:футер 3-х нитка /кружево / кулирная гладь / сетка (кружево и кулирная гладь на заклепках, по желанию их можно снять)
+машинная вышивка и нашивки тканью
+
+baby size (m-l) длина 65см спереди 75см сзади / ширина 65
+big size (xl+) длина 70см спереди 80см сзади / ширина 70</div>
+            
+            <div class="sizes">
+                <div class="size-btn" onclick="selectSize(this)">baby-size</div>
+                <div class="size-btn" onclick="selectSize(this)">big-size</div>
+            </div>
+            
+            <button id="to-order-btn" class="btn-main" onclick="showPage('order-page')">Перейти к оформлению</button>
+        </div>
+    </div>
+
+    <!-- ОФОРМЛЕНИЕ ДОСТАВКИ -->
+    <div id="order-page" class="page">
+        <div class="back-nav" onclick="showPage('product-page')">← К ТОВАРУ</div>
+        <div class="details">
+            <h2 style="margin-bottom: 25px; font-weight: 900; font-size: 28px;">ДОСТАВКА</h2>
+            
+            <div class="form-group">
+                <input type="text" id="fio" placeholder="ФИО" maxlength="100">
+            </div>
+
+            <div class="form-group">
+                <input 
+                    type="tel" 
+                    id="phone" 
+                    placeholder="Номер телефона (+7 или 8...)" 
+                    maxlength="20"
+                    autocomplete="tel"
+                >
+                <span style="font-size: 12px; color: #666;">Нужен для звонка курьера</span>
+            </div>
+
+            <!-- ВЫБОР ГОРОДА И АДРЕСА - ОБЪЕДИНЕННОЕ ПОЛЕ -->
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 8px; font-size: 12px; color: #888; text-transform: uppercase; font-weight: 800;">Город и адрес сдэка</label>
+                <input 
+                    type="text" 
+                    id="full-address" 
+                    placeholder="Начни вводить город и адрес (напр. Москва, Арбат)..." 
+                    maxlength="300"
+                    autocomplete="off"
+                >
+                <span style="font-size: 12px; color: #666;">DaData подскажет город и адрес</span>
+            </div>
+
+            <!-- ИНФО ПО ДОСТАВКЕ - СТАТИЧНОЕ ЗНАЧЕНИЕ -->
+            <div class="shipping-info" id="shipping-info">
+                <div style="color: #888;">💰 Стоимость доставки:</div>
+                <div class="shipping-cost" id="shipping-cost">Рассчитается в боте</div>
+                <div id="shipping-status" class="shipping-status success" style="background: #1a2a1a; color: #6a6;">
+                    ✅ Доставка рассчитывается автоматически при оформлении заказа
+                </div>
+            </div>
+
+            <!-- ПОЛЕ ДЛЯ ИНДЕКСА -->
+            <div class="form-group">
+                <input type="text" id="postal-code" placeholder="Почтовый индекс" maxlength="6" inputmode="numeric">
+                <span style="font-size: 12px; color: #666;">Заполнится автоматически из адреса</span>
+            </div>
+
+            <!-- СКРЫТЫЕ ПЕРЕМЕННЫЕ ДЛЯ СОХРАНЕНИЯ ДАННЫХ -->
+            <input type="hidden" id="selected-city" value="">
+            <input type="hidden" id="selected-address-full" value="">
+
+            <div class="form-group">
+                <input type="email" id="email" placeholder="Email (опционально)" maxlength="100">
+            </div>
+
+            <div class="form-group">
+                <input type="text" id="tg_contact" placeholder="@username в telegram" maxlength="50">
+            </div>
+
+            <button id="submit-order" class="btn-main" onclick="sendOrder()">Оформить заказ</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.headerColor = '#000000';
+
+    let selectedSize = "";
+    let currentProductKey = 'hoodie';
+    let currentShippingCost = 500;
+    let productSwiper = null;
+    let selectedCity = "";
+    let selectedPostalCode = "";
+    let selectedAddressFull = "";
+
+    const products = {
+        hoodie: {
+            title: 'zip-hoodie "snich"',
+            price: 8000,
+            description: `new drop
+оверсайз крой
+ткань:футер 3-х нитка /кружево / кулирная гладь / сетка (кружево и кулирная гладь на заклепках, по желанию их можно снять)
+машинная вышивка и нашивки тканью
+
+baby size (m-l) длина 65см спереди 75см сзади / ширина 65
+big size (xl+) длина 70см спереди 80см сзади / ширина 70`,
+            images: [
+                "https://raw.githubusercontent.com/olisher2015pro100/mngnv-que/main/zip-hoode.jpg",
+                "https://raw.githubusercontent.com/olisher2015pro100/mngnv-que/main/zip-hoode1.jpg",
+                "https://raw.githubusercontent.com/olisher2015pro100/mngnv-que/main/zip-hoode2.jpg",
+                "https://raw.githubusercontent.com/olisher2015pro100/mngnv-que/main/zip-hoode3.jpg"
+            ],
+            sizes: ['baby-size','big-size']
+        },
+        tshirt: {
+            title: 't-shirt "snich"',
+            price: 2900,
+            description: `material: 94% хлопок, 6% лайкра
+black/white
+оверсайз крой + фулл машинная вышивка`,
+            images: [
+                "tshirt1.jpg",
+                "tshirt2.jpg",
+                "tshirt3.jpg"
+            ],
+            sizes: ['s-m(160+)','m-l(170+)','l-xl(180+)']
+        }
+    };
+
+    // 🏙️ СПИСОК ПОПУЛЯРНЫХ ГОРОДОВ РФ
+    const popularCities = [
+        "Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Казань",
+        "Челябинск", "Омск", "Самара", "Уфа", "Ростов-на-Дону",
+        "Пермь", "Воронеж", "Волгоград", "Краснодар", "Саратов",
+        "Тюмень", "Иркутск", "Ульяновск", "Барнаул", "Владивосток",
+        "Киров", "Махачкала", "Томск", "Оренбург", "Кемерово",
+        "Улан-Удэ", "Нижний Новгород", "Чебоксары", "Мордовия", "Смоленск"
+    ];
+
+    // 🌐 ЛОГИКА ИНИЦИАЛИЗАЦИИ
+    document.addEventListener('DOMContentLoaded', function() {
+        // Слушаем ввод телефона
+        document.getElementById('phone').addEventListener('input', formatPhone);
+        
+        // 📍 ИНИЦИАЛИЗАЦИЯ DaData SUGGESTIONS ДЛЯ ПОЛНОГО АДРЕСА
+        $("#full-address").suggestions({
+            token: "ВАШ_КЛЮЧ_DADATA",
+            type: "ADDRESS",
+            minChars: 2,
+            onSelect: function(suggestion) {
+                console.log("🏠 Выбран адрес полностью:", suggestion);
+                
+                // Извлекаем нужные данные
+                const address = suggestion.value; // Полный адрес
+                const city = suggestion.data.city || suggestion.data.settlement || ""; // Город
+                const postalCode = suggestion.data.postal_code || ""; // Индекс
+                
+                console.log(`🏙️ Город: '${city}'`);
+                console.log(`📍 Адрес: ${address}`);
+                console.log(`📮 Индекс: ${postalCode}`);
+                
+                // Сохраняем данные в переменные
+                selectedCity = city;
+                selectedAddressFull = address;
+                selectedPostalCode = postalCode;
+                
+                // Заполняем скрытые поля
+                document.getElementById('selected-city').value = city;
+                document.getElementById('selected-address-full').value = address;
+                
+                // Заполняем поле индекса
+                if (postalCode) {
+                    document.getElementById('postal-code').value = postalCode;
+                    console.log(`✅ Индекс вписан в поле: ${postalCode}`);
+                }
+                
+                // ✅ Доставка больше не рассчитывается здесь
+                // Бот rассчитает доставку автоматически через СДЭК API
+                if (city) {
+                    console.log(`✅ Город выбран: ${city} (доставка рассчитается в боте)`);
+                } else {
+                    console.warn("⚠️ Город не найден в адресе");
+                }
+                
+                console.log(`✅ Адрес, город и индекс сохранены`);
+            },
+            onError: function(error) {
+                console.error("❌ Ошибка DaData для адреса:", error);
+            }
+        });
+    });
+
+    // 📝 ФОРМАТИРОВАНИЕ ТЕЛЕФОНА
+    function formatPhone(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        
+        // Ограничения по длине
+        if (value.length > 11) {
+            value = value.slice(0, 11);
+        }
+        
+        // Красивое отображение
+        let formatted = '';
+        if (value.length > 0) {
+            if (value[0] === '7' || value[0] === '8') {
+                formatted = '+7 ';
+                if (value.length > 1) formatted += value.slice(1, 4) + ' ';
+                if (value.length > 4) formatted += value.slice(4, 7) + ' ';
+                if (value.length > 7) formatted += value.slice(7, 9) + ' ';
+                if (value.length > 9) formatted += value.slice(9, 11);
+            } else {
+                formatted = value;
+            }
+        }
+        
+        e.target.value = formatted;
+    }
+
+    //  ВЫБОР ГОРОДА - ДОСТАВКА РАССЧИТАЕТСЯ В БОТЕ
+    async function selectCity(cityName) {
+        // Этот расчет больше не выполняется на фронте
+        // Доставка будет рассчитана ботом через СДЭК API
+        
+        selectedCity = cityName || "";
+        console.log(`✅ Город выбран: ${cityName}`);
+        console.log(`💬 Доставка будет рассчитана ботом при оформлении заказа`);
+        
+        // Используем стандартную стоимость доставки
+        currentShippingCost = 500;
+        
+        // Обновляем общую стоимость заказа
+        updateTotalPrice();
+    }
+
+    // 📊ОБЩ ФУНКЦИИ
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        window.scrollTo(0, 0);
+
+        if (pageId === 'order-page') {
+            updateTotalPrice();
+        }
+    }
+
+    function updateTotalPrice() {
+        const p = products[currentProductKey] || products.hoodie;
+        document.getElementById('submit-order').textContent = `Оформить заказ на ${p.price}₽`;
+    }
+
+    function openProduct(key = 'hoodie') {
+        currentProductKey = key;
+        const p = products[key] || products.hoodie;
+        selectedSize = '';
+        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+
+        let html = '';
+        p.images.forEach(img => { html += `<div class="swiper-slide"><img src="${img}" alt=""></div>`; });
+        if (productSwiper) {
+            productSwiper.destroy(true, true);
+            productSwiper = null;
+        }
+        const pagEl = document.querySelector('.mySwiper .swiper-pagination');
+        if (pagEl) pagEl.innerHTML = '';
+        document.getElementById('gallery').innerHTML = html;
+
+        productSwiper = new Swiper(".mySwiper", {
+            slidesPerView: 1,
+            spaceBetween: 0,
+            loop: false,
+            pagination: { el: ".swiper-pagination", clickable: true },
+            resistanceRatio: 0,
+            watchOverflow: true,
+            observer: true,
+            observeParents: true,
+        });
+
+        document.querySelector('.main-title').textContent = p.title;
+        document.querySelector('.main-price').textContent = p.price + '₽';
+        document.querySelector('.description').textContent = p.description;
+
+        let sizesHtml = '';
+        p.sizes.forEach((s, i) => {
+            const cls = (key === 'tshirt' && i === p.sizes.length - 1) ? 'size-btn full' : 'size-btn';
+            sizesHtml += `<div class="${cls}" onclick="selectSize(this)">${s}</div>`;
+        });
+        document.querySelector('.sizes').innerHTML = sizesHtml;
+
+        showPage('product-page');
+    }
+
+    function selectSize(btn) {
+        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedSize = btn.textContent;
+    }
+
+    // ✅ ОТПРАВКА ЗАКАЗА
+    function sendOrder() {
+        const fio = document.getElementById('fio').value.trim();
+        const city = document.getElementById('selected-city').value.trim() || selectedCity;
+        const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const tg_c = document.getElementById('tg_contact').value.trim();
+        const address = document.getElementById('full-address').value.trim();
+        const postal_code = document.getElementById('postal-code').value.trim() || selectedPostalCode;
+        const addressFull = document.getElementById('selected-address-full').value.trim() || selectedAddressFull;
+
+        // 🔍 ОТЛАДКА
+        console.log("📋 ОТЛАДКА ЗАКАЗА:");
+        console.log(`   selected-city field: '${document.getElementById('selected-city').value}'`);
+        console.log(`   selectedCity variable: '${selectedCity}'`);
+        console.log(`   Final city: '${city}'`);
+        console.log(`   postal_code: '${postal_code}'`);
+        console.log(`   selectedPostalCode: '${selectedPostalCode}'`);
+
+        // ✓ ВАЛИДАЦИЯ
+        if (!selectedSize) {
+            tg.showAlert("🚫 Выбери размер!");
+            return;
+        }
+        if (!fio) {
+            tg.showAlert("🚫 Заполни ФИО!");
+            return;
+        }
+        if (!phone || phone.replace(/\D/g, '').length < 10) {
+            tg.showAlert("🚫 Введи корректный номер телефона!");
+            return;
+        }
+        if (!city && !postal_code) {
+            tg.showAlert("🚫 Выбери город доставки или укажи почтовый индекс!");
+            return;
+        }
+        if (!address) {
+            tg.showAlert("🚫 Укажи адрес доставки!");
+            return;
+        }
+        if (!tg_c) {
+            tg.showAlert("🚫 Укажи telegram!");
+            return;
+        }
+
+        const p = products[currentProductKey] || products.hoodie;
+
+        const orderData = {
+            item: p.title,
+            price: p.price,
+            shipping_cost: currentShippingCost,
+            shipping_city: city || "не указан",
+            size: selectedSize,
+            customer: fio,
+            phone: phone,
+            email: email,
+            address: address,
+            address_full: addressFull,
+            postal_code: postal_code,
+            index: postal_code,
+            idx: postal_code,
+            tg_user: tg_c
+        };
+
+        console.log("📦 Отправляю заказ:", orderData);
+        tg.sendData(JSON.stringify(orderData));
+    }
+</script>
+
+</body>
+</html>
